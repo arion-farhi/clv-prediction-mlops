@@ -1,16 +1,21 @@
-# Customer Lifetime Value Prediction
+# Customer Lifetime Value Prediction - MLOps Pipeline
 
-**[Live Demo](https://clv-demo-674754622820.us-central1.run.app/)** | Production MLOps pipeline predicting 12-month customer lifetime value using a hybrid neural network with Hugging Face embeddings
+**[Live Demo](https://clv-demo-674754622820.us-central1.run.app/)** | End-to-end MLOps system for predicting customer lifetime value on Google Cloud
 
 ---
 
-## Problem
+## The Problem
 
-E-commerce companies allocate marketing spend inefficiently without accurate predictions of which customers will generate long-term revenue.
+E-commerce companies allocate marketing spend inefficiently without accurate predictions of which customers will generate long-term revenue. This leads to:
+- **Wasted acquisition spend** → targeting low-value customers
+- **Missed opportunities** → under-investing in high-value segments
+- **Reactive strategies** → no forward-looking customer valuation
 
-## Solution
+## The Solution
 
-Built a hybrid deep neural network combining RFM behavioral features with Hugging Face text embeddings from product descriptions, predicting 12-month CLV with automated drift detection and retraining triggers.
+Built a hybrid deep neural network combining RFM behavioral features with Hugging Face text embeddings from product descriptions, predicting 12-month CLV. Implemented a production MLOps pipeline with automated drift detection, retraining triggers, and A/B testing infrastructure - all deployed on Google Cloud Platform.
+
+---
 
 ## Results
 
@@ -20,6 +25,22 @@ Built a hybrid deep neural network combining RFM behavioral features with Huggin
 | Median Absolute Error | $429 |
 | Predictions within $1,000 | 68.6% |
 | Tuning Improvement | 27% MAE reduction |
+
+---
+
+## Key Findings & Learnings
+
+### 1. Hybrid Features Outperformed RFM Alone
+Adding Hugging Face embeddings from product descriptions captured purchase preference patterns that traditional RFM metrics missed. The 384-dimensional embeddings contributed meaningful signal to the final predictions.
+
+### 2. Robust Metrics Tell a Better Story
+MAE ($1,449) was inflated by extreme outliers - customers with $280K+ CLV. Median AE ($429) and R² (0.735) better represent model performance for typical customers. Choosing the right metric matters for stakeholder communication.
+
+### 3. Vizier Tuning Delivered Significant Gains
+Vertex AI Vizier reduced MAE by 27% (from $1,987 to $1,449) through 15 trials of random search. Best hyperparameters: 201/74 units, 0.25 dropout, 0.0027 learning rate.
+
+### 4. Demo Apps Need Realistic Baselines
+Exposing only 6 of 396 features in the Streamlit demo required using median customer values for the remaining 390 features (including all embeddings). Without this baseline, predictions were nonsensical.
 
 ---
 
@@ -71,29 +92,51 @@ Built a hybrid deep neural network combining RFM behavioral features with Huggin
 
 ---
 
-## Pipeline Screenshots
+## Pipeline Components
 
 ### Vertex AI Vizier Hyperparameter Tuning
+15 trials of random search optimization across learning rate, dropout, and layer sizes. Achieved 27% MAE improvement over baseline:
+
 ![Vizier Study](screenshots/vizier-study.png)
 
 ### Vertex AI Pipeline Orchestration
+Four-step pipeline: Load Data → Train Model → Evaluate → Conditional Registration. Models only registered if MAE beats threshold:
+
 ![Pipeline DAG](screenshots/pipeline-dag.png)
 
 ### GKE Production Deployment
+TensorFlow Serving container deployed on GKE Autopilot with LoadBalancer endpoint for production inference:
+
 ![GKE Deployment](screenshots/gke-deployment.png)
 
-### Cloud Run Demo with A/B Testing
+### Cloud Run Demo Application
+Streamlit app with real-time predictions, model performance metrics, and architecture visualization:
+
 ![Cloud Run](screenshots/cloud-run.png)
+
+### A/B Testing Infrastructure
+Cloud Run traffic splitting enables gradual rollout of new model versions (80/20 split shown):
+
 ![A/B Testing](screenshots/ab-testing.png)
 
 ### Evidently AI Drift Monitoring
+Monitors feature distributions using Wasserstein distance. Compares production data against training baseline:
+
 ![Evidently Drift](screenshots/evidently-drift.png)
 
-### Cloud Scheduler + Cloud Functions Retraining
+### Cloud Functions Retraining Trigger
+HTTP-triggered function that submits pipeline jobs. Called by drift check when distribution shift detected:
+
 ![Drift Check Function](screenshots/drift-check.png)
+
+### Cloud Scheduler Automation
+Scheduled weekly drift checks that trigger the Evidently analysis and conditional retraining:
+
 ![Cloud Scheduler](screenshots/cloud-scheduler.png)
 
 ### BigQuery Prediction Logging
+All predictions logged with features and timestamps for monitoring and drift detection:
+
 ![BigQuery Logs](screenshots/bigquery-logs.png)
 
 ---
@@ -153,15 +196,12 @@ clv-prediction-mlops/
 
 ## The Journey
 
-**What worked:**
-- Hugging Face embeddings captured product preference patterns that RFM alone missed
-- Vertex AI Vizier found hyperparameters that reduced MAE by 27%
-- Median AE ($429) tells a better story than MAE ($1,449) due to high-CLV outliers
+This project demonstrates production ML engineering beyond model training - automated pipelines, model versioning, drift detection, and multi-environment deployment.
 
-**What I learned:**
-- Neural networks for CLV are sensitive to outliers - robust metrics matter
-- PySpark on Dataproc is overkill for 4K customers but demonstrates the pattern for scale
-- Demo apps need realistic baselines - exposing 6 of 396 features required median imputation for the rest
+Some unexpected learnings along the way:
+- **Outliers dominate CLV distributions.** A few whale customers with $100K+ CLV skew MAE dramatically. Median AE and percentile-based metrics give a clearer picture of typical model performance.
+- **PySpark on Dataproc is overkill for 4K customers** but demonstrates the pattern for scaling to millions. The same code would work on a 100M customer dataset.
+- **Demo apps are harder than they look.** Exposing partial features while maintaining realistic predictions required careful baseline imputation with median values.
 
 **Production considerations:**
 - Pipeline MAE threshold ($2,000) was exceeded due to NN randomness; production would compare against current champion model
@@ -172,4 +212,4 @@ clv-prediction-mlops/
 
 ## Author
 
-**Arion Farhi** - [LinkedIn](https://www.linkedin.com/in/arionfarhi/) | [GitHub](https://github.com/arion-farhi)
+**Arion Farhi** - [GitHub](https://github.com/arion-farhi) | [LinkedIn](https://linkedin.com/in/arionfarhi)
