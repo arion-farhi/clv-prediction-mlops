@@ -1,8 +1,6 @@
 # Customer Lifetime Value Prediction
 
-> Production MLOps pipeline predicting 12-month customer lifetime value using a hybrid neural network with Hugging Face embeddings.
-
-**[Live Demo](https://clv-demo-674754622820.us-central1.run.app/)**
+**[Live Demo](https://clv-demo-674754622820.us-central1.run.app/)** | Production MLOps pipeline predicting 12-month customer lifetime value using a hybrid neural network with Hugging Face embeddings.
 
 ---
 
